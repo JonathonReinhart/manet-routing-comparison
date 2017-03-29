@@ -1,0 +1,29 @@
+env = Environment(
+	CCFLAGS = ['-Wall', '-Werror'],
+	CPPPATH = [
+		'/usr/include/ns3.17',
+	],
+)
+
+def ns3_libs(libs):
+    result = []
+    for l in libs:
+        result.append('ns3.17-' + l)
+    return result
+
+env.Program(
+    target = 'manet-routing-compare',
+    source = 'manet-routing-compare.cc',
+    LIBS = ns3_libs([
+        'core',
+        'network',
+        'internet',
+        'mobility',
+        'wifi',
+        'aodv',
+        'olsr',
+        'dsdv',
+        'dsr',
+        'applications',
+    ]),
+)
