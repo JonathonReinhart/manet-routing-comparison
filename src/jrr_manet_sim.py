@@ -39,6 +39,11 @@ class ManetSimulator(object):
     def __init__(self, num_nodes, protocol):
         self._setup(num_nodes, protocol)
 
+        self._bytesTotal = 0
+        self._bytesLast= 0
+        self._packetsTotal  = 0
+        self._packetsLast= 0
+
 
     def _setup(self, num_nodes, protocol):
         # Create a container with the desired number of nodes
@@ -149,8 +154,32 @@ class ManetSimulator(object):
         sink.Bind(sockaddr)
         sink.SetRecvCallback(self._packet_rx_callback)
 
-    def _packet_rx_callback(self, *args, **kwargs):
-        logging.debug("Packet callback: args={} kwargs={}".format(args, kwargs))
+    def _packet_rx_callback(self, socket):
+        while True:
+            packet = socket.Recv()
+            if not packet:
+                return
+            self._bytesTotal    += packet.GetSize()
+            self._bytesLast     += packet.GetSize()
+            self._packetsTotal  += 1
+            self._packetsLast   += 1
+
+    def check_throughput(self):
+        interval = 1.0  # sec
+
+        logging.debug("t={} Bytes: total={}, {}/sec    Packets: total={}, {}/sec".format(
+            ns.core.Simulator.Now().GetSeconds(),
+            self._bytesTotal,
+            self._bytesLast / interval,
+            self._packetsTotal,
+            self._packetsLast / interval,
+            ))
+
+        self._bytesLast     = 0
+        self._packetsLast   = 0
+
+        ns.core.Simulator.Schedule(Seconds(interval), self.check_throughput)
+
 
 
 protocol_map = {
@@ -186,6 +215,7 @@ def main():
     trace = ns.network.AsciiTraceHelper()
     ns.mobility.MobilityHelper.EnableAsciiAll(trace.CreateFileStream("trace.mob"))
 
+    sim.check_throughput()
 
     ns.core.Simulator.Stop(Seconds(TOTAL_TIME))
     ns.core.Simulator.Run()
