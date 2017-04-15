@@ -31,6 +31,9 @@ WIFI_TX_POWER       = 7.5   # dBm
 NODE_X_INTERVAL     = 5.0   # m
 NODE_Y_INTERVAL     = 20.0  # m
 NODES_PER_ROW       = 20
+NUM_SINKS           = 10
+UDP_PORT            = 9
+TOTAL_TIME          = 200.0 # sec
 
 def setup_wifi_phy():
     chanhlp = ns.wifi.YansWifiChannelHelper()
@@ -80,6 +83,17 @@ def setup_routing(args):
     inet = ns.internet.InternetStackHelper()
     inet.SetRoutingHelper(route_list)
     return inet
+
+def setup_packet_receive(sockaddr, node):
+    tid = ns.core.TypeId.LookupByName("ns3::UdpSocketFactory")
+    sink = ns.network.Socket.CreateSocket(node, tid)
+    sink.Bind(sockaddr)
+    sink.SetRecvCallback(packet_rx_callback)
+    return sink
+
+
+def packet_rx_callback(*args, **kwargs):
+    logging.debug("Packet callback: args={} kwargs={}".format(args, kwargs))
 
 protocol_map = {
     'AODV':     ns.aodv.AodvHelper,
@@ -137,6 +151,26 @@ def main():
         ns.network.Ipv4Address("10.1.1.0"),
         ns.network.Ipv4Mask("255.255.255.0"))
     ifaces = addrs.Assign(adhocDevices)
+
+    onoff = ns.applications.OnOffHelper("ns3::UdpSocketFactory", ns.network.Address())
+    onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"))
+    onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"))
+
+    # Set up the source/sink nodes
+    for i in xrange(NUM_SINKS):
+        node = adhocNodes.Get(i)
+        sockaddr = ns.network.InetSocketAddress(ifaces.GetAddress(i), UDP_PORT)
+
+        setup_packet_receive(sockaddr, node)
+
+        onoff.SetAttribute("Remote", ns.network.AddressValue(sockaddr))
+        temp = onoff.Install(adhocNodes.Get(i + NUM_SINKS))
+
+        var = ns.core.UniformRandomVariable()
+        temp.Start(ns.core.Seconds(var.GetValue(100.0, 101.0)))
+        temp.Stop(ns.core.Seconds(TOTAL_TIME))
+
+
 
 
     #readline.parse_and_bind('tab: complete')
