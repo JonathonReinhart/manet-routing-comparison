@@ -15,7 +15,7 @@ import logging
 
 import ns.applications
 import ns.core
-from ns.core import DoubleValue, StringValue, UintegerValue
+from ns.core import DoubleValue, StringValue, UintegerValue, Seconds
 import ns.internet
 import ns.network
 import ns.wifi
@@ -167,10 +167,16 @@ def main():
         temp = onoff.Install(adhocNodes.Get(i + NUM_SINKS))
 
         var = ns.core.UniformRandomVariable()
-        temp.Start(ns.core.Seconds(var.GetValue(100.0, 101.0)))
-        temp.Stop(ns.core.Seconds(TOTAL_TIME))
+        temp.Start(Seconds(var.GetValue(100.0, 101.0)))
+        temp.Stop(Seconds(TOTAL_TIME))
 
 
+    trace = ns.network.AsciiTraceHelper()
+    ns.mobility.MobilityHelper.EnableAsciiAll(trace.CreateFileStream("trace.mob"))
+
+
+    ns.core.Simulator.Stop(Seconds(TOTAL_TIME))
+    ns.core.Simulator.Run()
 
 
     #readline.parse_and_bind('tab: complete')
