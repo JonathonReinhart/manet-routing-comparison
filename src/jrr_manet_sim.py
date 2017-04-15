@@ -10,6 +10,11 @@
 # - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html 
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 #
+# TODO:
+# - Randomly choose single source and single sink node, per assignment
+# - Determine and record routing establishment time
+# - Determine and record end-to-end delay
+#
 import argparse
 import logging
 
