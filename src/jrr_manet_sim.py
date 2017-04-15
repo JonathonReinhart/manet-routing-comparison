@@ -11,6 +11,7 @@
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 #
 import argparse
+import logging
 
 import ns.applications
 import ns.core
@@ -93,11 +94,17 @@ def parse_args():
             help='Number of nodes (default: %(default)d)')
     ap.add_argument('-p', '--protocol', default='OLSR', choices=protocol_map.keys(),
             help='Routing protocol (default: %(default)s)')
+    ap.add_argument('-l', '--log', dest='loglevel',
+            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+            default='WARNING',
+            help='Set the logging level (default: %(default)s)')
 
     return ap.parse_args()
 
 def main():
     args = parse_args()
+    logging.basicConfig(level=args.loglevel)
+
 
     # Create a container with the desired number of nodes
     adhocNodes = ns.network.NodeContainer();
