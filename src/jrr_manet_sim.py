@@ -131,6 +131,13 @@ def main():
     inet = setup_routing(args)
     inet.Install(adhocNodes)
 
+    # Assign IP addresses
+    addrs = ns.internet.Ipv4AddressHelper()
+    addrs.SetBase(
+        ns.network.Ipv4Address("10.1.1.0"),
+        ns.network.Ipv4Mask("255.255.255.0"))
+    ifaces = addrs.Assign(adhocDevices)
+
 
     #readline.parse_and_bind('tab: complete')
     #import code; code.interact(local=locals())
