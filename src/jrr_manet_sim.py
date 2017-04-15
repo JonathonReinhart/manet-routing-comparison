@@ -46,25 +46,13 @@ class ManetSimulator(object):
         self.nodes.Create(num_nodes)
 
         # Set up Wifi devices
-        phyMode = StringValue("DsssRate11Mbps")
-
-        wifi = ns.wifi.WifiHelper()
-        wifi.SetStandard(ns.wifi.WIFI_PHY_STANDARD_80211b)
-        wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
-                                     "DataMode", phyMode,
-                                     "ControlMode", phyMode)
-
-        wifiPhy = self._setup_wifi_phy()
-        wifiMac = self._setup_wifi_mac()
-        adhocDevices = wifi.Install(wifiPhy, wifiMac, self.nodes)
+        adhocDevices = self._setup_wifi()
 
         # Set up mobility
-        mobility = self._setup_mobility()
-        mobility.Install(self.nodes)
+        self._setup_mobility()
 
         # Set up routing
-        inet = self._setup_routing(protocol)
-        inet.Install(self.nodes)
+        self._setup_routing(protocol)
 
         # Assign IP addresses
         addrs = ns.internet.Ipv4AddressHelper()
@@ -90,6 +78,21 @@ class ManetSimulator(object):
             var = ns.core.UniformRandomVariable()
             temp.Start(Seconds(var.GetValue(100.0, 101.0)))
             temp.Stop(Seconds(TOTAL_TIME))
+
+
+    def _setup_wifi(self):
+        phyMode = StringValue("DsssRate11Mbps")
+
+        wifi = ns.wifi.WifiHelper()
+        wifi.SetStandard(ns.wifi.WIFI_PHY_STANDARD_80211b)
+        wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
+                                     "DataMode", phyMode,
+                                     "ControlMode", phyMode)
+
+        wifiPhy = self._setup_wifi_phy()
+        wifiMac = self._setup_wifi_mac()
+        devices = wifi.Install(wifiPhy, wifiMac, self.nodes)
+        return devices
 
 
     def _setup_wifi_phy(self):
@@ -129,8 +132,7 @@ class ManetSimulator(object):
 
         # Objects will be in a fixed position throughout the simulation
         mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
-
-        return mobility
+        mobility.Install(self.nodes)
 
     def _setup_routing(self, protocol_name):
         protocol = protocol_map[protocol_name]()
@@ -139,14 +141,13 @@ class ManetSimulator(object):
 
         inet = ns.internet.InternetStackHelper()
         inet.SetRoutingHelper(route_list)
-        return inet
+        inet.Install(self.nodes)
 
     def _setup_packet_receive(self, sockaddr, node):
         tid = ns.core.TypeId.LookupByName("ns3::UdpSocketFactory")
         sink = ns.network.Socket.CreateSocket(node, tid)
         sink.Bind(sockaddr)
         sink.SetRecvCallback(self._packet_rx_callback)
-        return sink
 
     def _packet_rx_callback(self, *args, **kwargs):
         logging.debug("Packet callback: args={} kwargs={}".format(args, kwargs))
@@ -188,10 +189,7 @@ def main():
 
     ns.core.Simulator.Stop(Seconds(TOTAL_TIME))
     ns.core.Simulator.Run()
-
-
-    #readline.parse_and_bind('tab: complete')
-    #import code; code.interact(local=locals())
+    ns.core.Simulator.Destroy()
 
 if __name__ == '__main__':
     main()
