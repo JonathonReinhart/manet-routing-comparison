@@ -8,6 +8,7 @@
 # References:
 # - https://www.nsnam.org/doxygen/manet-routing-compare_8cc.html
 # - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html 
+# - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 #
 import argparse
 
@@ -17,9 +18,15 @@ from ns.core import DoubleValue, StringValue, UintegerValue
 import ns.internet
 import ns.network
 import ns.wifi
+import ns.mobility
 
 import readline
 import rlcompleter
+
+WIFI_TX_POWER       = 7.5   # dBm
+NODE_X_INTERVAL     = 5.0   # m
+NODE_Y_INTERVAL     = 20.0  # m
+NODES_PER_ROW       = 20
 
 def setup_wifi_phy():
     chanhlp = ns.wifi.YansWifiChannelHelper()
@@ -29,7 +36,7 @@ def setup_wifi_phy():
     phy = ns.wifi.YansWifiPhyHelper.Default()
     phy.SetChannel(chanhlp.Create())
 
-    txp = DoubleValue(7.5)
+    txp = DoubleValue(WIFI_TX_POWER)
     phy.Set("TxPowerStart", txp)
     phy.Set("TxPowerEnd", txp)
 
@@ -41,6 +48,25 @@ def setup_wifi_mac():
     mac.SetType("ns3::AdhocWifiMac")
     return mac
 
+def setup_mobility():
+    mobility = ns.mobility.MobilityHelper()
+
+    # Set up the grid
+    # Objects are layed out starting from (-100, -100)
+    mobility.SetPositionAllocator(
+            "ns3::GridPositionAllocator",
+            "MinX", DoubleValue(-100.0),
+            "MinY", DoubleValue(-100.0),
+            "DeltaX", DoubleValue(NODE_X_INTERVAL),
+            "DeltaY", DoubleValue(NODE_Y_INTERVAL),
+            "GridWidth", UintegerValue(NODES_PER_ROW),
+            "LayoutType", StringValue("RowFirst"),
+            )
+
+    # Objects will be in a fixed position throughout the simulation
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+
+    return mobility
 
 
 def parse_args():
@@ -71,6 +97,8 @@ def main():
     adhocDevices = wifi.Install(wifiPhy, wifiMac, adhocNodes)
 
     # Set up mobility
+    mobility = setup_mobility()
+    mobility.Install(adhocNodes)
 
 
 
