@@ -112,6 +112,10 @@ class ManetSimulator(object):
         wifiPhy = self._setup_wifi_phy()
         wifiMac = self._setup_wifi_mac()
         devices = wifi.Install(wifiPhy, wifiMac, self.nodes)
+
+        # Enable tracing
+        wifiPhy.EnablePcapAll("manet", promiscuous=True)
+
         return devices
 
 
