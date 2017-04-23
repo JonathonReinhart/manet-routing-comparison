@@ -11,12 +11,13 @@
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 #
 # TODO:
-# - Randomly choose single source and single sink node, per assignment
 # - Determine and record routing establishment time
 # - Determine and record end-to-end delay
 #
+from __future__ import print_function
 import argparse
 import logging
+import random
 
 import ns.applications
 import ns.core
@@ -39,6 +40,12 @@ NODES_PER_ROW       = 20
 NUM_SINKS           = 10
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
+
+def SelectRandomNode(nodes, k=1):
+    """Select 'k' random nodes from the NodeContainer 'nodes'"""
+    indices = random.sample(xrange(nodes.GetN()), k)
+    return [nodes.Get(i) for i in indices]
+
 
 class ManetSimulator(object):
     def __init__(self, num_nodes, protocol):
@@ -75,19 +82,23 @@ class ManetSimulator(object):
         onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"))
         onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"))
 
-        # Set up the source/sink nodes
-        for i in xrange(NUM_SINKS):
-            node = self.nodes.Get(i)
-            sockaddr = ns.network.InetSocketAddress(ifaces.GetAddress(i), UDP_PORT)
 
-            self._setup_packet_receive(sockaddr, node)
+        # Randomly choose origin node (O) and destination node (D)
+        self.origin, self.destination = SelectRandomNode(self.nodes, 2)
 
-            onoff.SetAttribute("Remote", ns.network.AddressValue(sockaddr))
-            temp = onoff.Install(self.nodes.Get(i + NUM_SINKS))
+        # Set up the sink node
+        node = self.destination
+        sockaddr = ns.network.InetSocketAddress(ifaces.GetAddress(node.GetId()), UDP_PORT)
+        self._setup_packet_receive(sockaddr, node)
 
-            var = ns.core.UniformRandomVariable()
-            temp.Start(Seconds(var.GetValue(100.0, 101.0)))
-            temp.Stop(Seconds(TOTAL_TIME))
+        # Source node
+        node = self.origin
+        onoff.SetAttribute("Remote", ns.network.AddressValue(sockaddr))
+        temp = onoff.Install(node)
+
+        var = ns.core.UniformRandomVariable()
+        temp.Start(Seconds(var.GetValue(100.0, 101.0)))
+        temp.Stop(Seconds(TOTAL_TIME))
 
 
     def _setup_wifi(self):
@@ -215,6 +226,9 @@ def main():
             num_nodes = args.num_nodes,
             protocol = args.protocol,
             )
+
+    print("Origin node:      {}".format(sim.origin.GetId()))
+    print("Destination node: {}".format(sim.destination.GetId()))
 
 
     trace = ns.network.AsciiTraceHelper()
