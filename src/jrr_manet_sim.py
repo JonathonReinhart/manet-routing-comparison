@@ -154,6 +154,10 @@ class ManetSimulator(object):
         mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
         mobility.Install(self.nodes)
 
+        # Enable tracing
+        trace = ns.network.AsciiTraceHelper()
+        mobility.EnableAsciiAll(trace.CreateFileStream("trace.mob"))
+
     def _setup_routing(self, protocol_name):
         protocol = protocol_map[protocol_name]()
         route_list = ns.internet.Ipv4ListRoutingHelper()
@@ -229,9 +233,6 @@ def main():
     print("Origin node:      {}".format(sim.origin.GetId()))
     print("Destination node: {}".format(sim.destination.GetId()))
 
-
-    trace = ns.network.AsciiTraceHelper()
-    ns.mobility.MobilityHelper.EnableAsciiAll(trace.CreateFileStream("trace.mob"))
 
     sim.check_throughput()
 
