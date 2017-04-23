@@ -232,11 +232,20 @@ class ManetSimulator(object):
 
         ns.core.Simulator.Schedule(Seconds(interval), self.check_throughput)
 
+def GetPosition(node):
+    mob = node.GetObject(ns.mobility.MobilityModel.GetTypeId())
+    return mob.GetPosition()
 
 def FormatNode(node):
     ip4 = node.GetObject(ns.internet.Ipv4.GetTypeId())
     addr = ip4.GetAddress(1,0).GetLocal()
-    return '{:<3} {}'.format(node.GetId(), addr)
+    return '{:<3} {:<12} {}'.format(node.GetId(), addr, GetPosition(node))
+
+
+def ShowAllNodes(nodes):
+    for node in (nodes.Get(i) for i in xrange(nodes.GetN())):
+        print(FormatNode(node))
+
 
 def SetupAodv():
     aodv = ns.aodv.AodvHelper()
@@ -271,6 +280,8 @@ def main():
             num_nodes = args.num_nodes,
             protocol = args.protocol,
             )
+
+    ShowAllNodes(sim.nodes)
 
     print("Origin node:      {}".format(FormatNode(sim.origin)))
     print("Destination node: {}".format(FormatNode(sim.destination)))
