@@ -23,6 +23,7 @@ from __future__ import print_function
 import argparse
 import logging
 import random
+import math
 import csv
 
 import ns.applications
@@ -233,6 +234,15 @@ class ManetSimulator(object):
 
         ns.core.Simulator.Schedule(Seconds(interval), self.check_throughput)
 
+def Distance3D(v1, v2):
+    def squared(x):
+        return math.pow(x, 2)
+
+    return math.sqrt(
+        squared(v2.x - v1.x) +
+        squared(v2.y - v1.y) +
+        squared(v2.z - v1.z))
+
 def GetPosition(node):
     mob = node.GetObject(ns.mobility.MobilityModel.GetTypeId())
     return mob.GetPosition()
@@ -286,6 +296,9 @@ def main():
 
     print("Origin node:      {}".format(FormatNode(sim.origin)))
     print("Destination node: {}".format(FormatNode(sim.destination)))
+    print("Distance:         {}".format(
+        Distance3D(GetPosition(sim.origin), GetPosition(sim.destination)))
+        )
 
 
     sim.check_throughput()
