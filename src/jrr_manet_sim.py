@@ -42,8 +42,6 @@ import rlcompleter
 WIFI_TX_POWER       = 7.5   # dBm
 NODE_X_INTERVAL     = 5.0   # m
 NODE_Y_INTERVAL     = 20.0  # m
-NODES_PER_ROW       = 20
-NUM_SINKS           = 10
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
 UDP_SEND_START_TIME = 15.0  # sec
@@ -88,7 +86,7 @@ class ManetSimulator(object):
         adhocDevices = self._setup_wifi()
 
         # Set up mobility
-        self._setup_mobility()
+        self._setup_mobility(num_nodes)
 
         # Set up routing
         self._setup_routing(protocol)
@@ -160,8 +158,11 @@ class ManetSimulator(object):
         mac.SetType("ns3::AdhocWifiMac")
         return mac
 
-    def _setup_mobility(self):
+    def _setup_mobility(self, num_nodes):
         mobility = ns.mobility.MobilityHelper()
+
+        # Try to keep the layout as square as possible
+        grid_width = int(round(math.sqrt(num_nodes)))
 
         # Set up the grid
         # Objects are layed out starting from (-100, -100)
@@ -171,7 +172,7 @@ class ManetSimulator(object):
                 "MinY", DoubleValue(-100.0),
                 "DeltaX", DoubleValue(NODE_X_INTERVAL),
                 "DeltaY", DoubleValue(NODE_Y_INTERVAL),
-                "GridWidth", UintegerValue(NODES_PER_ROW),
+                "GridWidth", UintegerValue(grid_width),
                 "LayoutType", StringValue("RowFirst"),
                 )
 
