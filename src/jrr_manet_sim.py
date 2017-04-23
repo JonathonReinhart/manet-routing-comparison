@@ -18,6 +18,7 @@ from __future__ import print_function
 import argparse
 import logging
 import random
+import csv
 
 import ns.applications
 import ns.core
@@ -56,6 +57,21 @@ class ManetSimulator(object):
         self._bytesLast= 0
         self._packetsTotal  = 0
         self._packetsLast= 0
+
+        self._csvfile = open('throughput.csv', 'wb')
+        self._csvwriter = csv.DictWriter(self._csvfile,
+                fieldnames = ['time', 'bytes', 'bytes_per_sec', 'packets', 'packets_per_sec'])
+        self._csvwriter.writeheader()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        self.close()
+
+    def close(self):
+        if self._csvfile:
+            self._csvfile.close()
 
 
     def _setup(self, num_nodes, protocol):
@@ -189,6 +205,14 @@ class ManetSimulator(object):
 
     def check_throughput(self):
         interval = 1.0  # sec
+
+        self._csvwriter.writerow(dict(
+            time = ns.core.Simulator.Now().GetSeconds(),
+            bytes = self._bytesTotal,
+            bytes_per_sec = self._bytesLast / interval,
+            packets = self._packetsTotal,
+            packets_per_sec = self._packetsLast / interval,
+            ))
 
         logging.debug("t={} Bytes: total={}, {}/sec    Packets: total={}, {}/sec".format(
             ns.core.Simulator.Now().GetSeconds(),
