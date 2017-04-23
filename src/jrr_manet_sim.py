@@ -10,6 +10,11 @@
 # - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html 
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 #
+# - AODV:
+#   - https://www.nsnam.org/docs/models/html/aodv.html
+#   - https://www.nsnam.org/doxygen/classns3_1_1_aodv_helper.html
+#   - https://www.nsnam.org/doxygen/classns3_1_1aodv_1_1_routing_protocol.html
+#
 # TODO:
 # - Determine and record routing establishment time
 # - Determine and record end-to-end delay
@@ -22,7 +27,7 @@ import csv
 
 import ns.applications
 import ns.core
-from ns.core import DoubleValue, StringValue, UintegerValue, Seconds
+from ns.core import BooleanValue, DoubleValue, StringValue, UintegerValue, Seconds
 import ns.internet
 import ns.network
 import ns.wifi
@@ -233,9 +238,13 @@ def FormatNode(node):
     addr = ip4.GetAddress(1,0).GetLocal()
     return '{:<3} {}'.format(node.GetId(), addr)
 
+def SetupAodv():
+    aodv = ns.aodv.AodvHelper()
+    aodv.Set("EnableHello", BooleanValue(False))
+    return aodv
 
 protocol_map = {
-    'AODV':     ns.aodv.AodvHelper,
+    'AODV':     SetupAodv,
     'OLSR':     ns.olsr.OlsrHelper,
     'DSDV':     ns.dsdv.DsdvHelper,
 }
