@@ -19,6 +19,9 @@ import ns.internet
 import ns.network
 import ns.wifi
 import ns.mobility
+import ns.aodv
+import ns.olsr
+import ns.dsdv
 
 import readline
 import rlcompleter
@@ -68,11 +71,28 @@ def setup_mobility():
 
     return mobility
 
+def setup_routing(args):
+    protocol = protocol_map[args.protocol]()
+    route_list = ns.internet.Ipv4ListRoutingHelper()
+    route_list.Add(protocol, 100)
+
+    inet = ns.internet.InternetStackHelper()
+    inet.SetRoutingHelper(route_list)
+    return inet
+
+protocol_map = {
+    'AODV':     ns.aodv.AodvHelper,
+    'OLSR':     ns.olsr.OlsrHelper,
+    'DSDV':     ns.dsdv.DsdvHelper,
+}
+
 
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument('-n', '--num-nodes', type=int, default=20,
             help='Number of nodes (default: %(default)d)')
+    ap.add_argument('-p', '--protocol', default='OLSR', choices=protocol_map.keys(),
+            help='Routing protocol (default: %(default)s)')
 
     return ap.parse_args()
 
@@ -100,6 +120,9 @@ def main():
     mobility = setup_mobility()
     mobility.Install(adhocNodes)
 
+    # Set up routing
+    inet = setup_routing(args)
+    inet.Install(adhocNodes)
 
 
     #readline.parse_and_bind('tab: complete')
