@@ -204,6 +204,11 @@ class ManetSimulator(object):
         ns.core.Simulator.Schedule(Seconds(interval), self.check_throughput)
 
 
+def FormatNode(node):
+    ip4 = node.GetObject(ns.internet.Ipv4.GetTypeId())
+    addr = ip4.GetAddress(1,0).GetLocal()
+    return '{:<3} {}'.format(node.GetId(), addr)
+
 
 protocol_map = {
     'AODV':     ns.aodv.AodvHelper,
@@ -234,8 +239,8 @@ def main():
             protocol = args.protocol,
             )
 
-    print("Origin node:      {}".format(sim.origin.GetId()))
-    print("Destination node: {}".format(sim.destination.GetId()))
+    print("Origin node:      {}".format(FormatNode(sim.origin)))
+    print("Destination node: {}".format(FormatNode(sim.destination)))
 
 
     sim.check_throughput()
