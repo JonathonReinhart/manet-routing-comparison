@@ -40,6 +40,7 @@ NODES_PER_ROW       = 20
 NUM_SINKS           = 10
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
+UDP_SEND_START_TIME = 15.0  # sec
 
 def SelectRandomNode(nodes, k=1):
     """Select 'k' random nodes from the NodeContainer 'nodes'"""
@@ -95,9 +96,7 @@ class ManetSimulator(object):
         node = self.origin
         onoff.SetAttribute("Remote", ns.network.AddressValue(sockaddr))
         temp = onoff.Install(node)
-
-        var = ns.core.UniformRandomVariable()
-        temp.Start(Seconds(var.GetValue(100.0, 101.0)))
+        temp.Start(Seconds(UDP_SEND_START_TIME))
         temp.Stop(Seconds(TOTAL_TIME))
 
 
