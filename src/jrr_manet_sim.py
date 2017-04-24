@@ -105,7 +105,9 @@ class ManetSimulator(object):
 
 
         # Randomly choose origin node (O) and destination node (D)
-        self.origin, self.destination = SelectRandomNode(self.nodes, 2)
+        #self.origin, self.destination = SelectRandomNode(self.nodes, 2)
+        self.origin = self.nodes.Get(0)
+        self.destination = self.nodes.Get(self.nodes.GetN() - 1)
 
         # Set up the sink node
         node = self.destination
