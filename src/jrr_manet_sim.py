@@ -250,8 +250,12 @@ def GetPosition(node):
 
 def FormatNode(node):
     ip4 = node.GetObject(ns.internet.Ipv4.GetTypeId())
-    addr = ip4.GetAddress(1,0).GetLocal()
-    return '{:<3} {:<12} {}'.format(node.GetId(), addr, GetPosition(node))
+    ipaddr = ip4.GetAddress(1,0).GetLocal()
+
+    macaddr = node.GetDevice(0).GetAddress()
+
+    return '{:<3} {:<12} {} {}'.format(
+            node.GetId(), ipaddr, macaddr, GetPosition(node))
 
 
 def ShowAllNodes(nodes):
