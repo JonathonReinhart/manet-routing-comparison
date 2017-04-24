@@ -170,8 +170,8 @@ class ManetSimulator(object):
         # Objects are layed out starting from (-100, -100)
         mobility.SetPositionAllocator(
                 "ns3::GridPositionAllocator",
-                "MinX", DoubleValue(-100.0),
-                "MinY", DoubleValue(-100.0),
+                "MinX", DoubleValue(0),
+                "MinY", DoubleValue(0),
                 "DeltaX", DoubleValue(NODE_X_INTERVAL),
                 "DeltaY", DoubleValue(NODE_Y_INTERVAL),
                 "GridWidth", UintegerValue(grid_width),
