@@ -187,12 +187,14 @@ class ManetSimulator(object):
         mobility.EnableAsciiAll(trace.CreateFileStream("trace.mob"))
 
     def _setup_routing(self, protocol_name):
-        protocol = protocol_map[protocol_name]()
-        route_list = ns.internet.Ipv4ListRoutingHelper()
-        route_list.Add(protocol, 100)
-
         inet = ns.internet.InternetStackHelper()
-        inet.SetRoutingHelper(route_list)
+
+        if True:
+            protocol = protocol_map[protocol_name]()
+            route_list = ns.internet.Ipv4ListRoutingHelper()
+            route_list.Add(protocol, 100)
+            inet.SetRoutingHelper(route_list)
+
         inet.Install(self.nodes)
 
     def _setup_packet_receive(self, sockaddr, node):
