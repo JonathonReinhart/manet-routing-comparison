@@ -166,7 +166,8 @@ class ManetSimulator(object):
         mobility = ns.mobility.MobilityHelper()
 
         # Try to keep the layout as square as possible
-        grid_width = int(round(math.sqrt(num_nodes)))
+        straight_line = True
+        grid_width = 1 if straight_line else int(round(math.sqrt(num_nodes)))
 
         # Set up the grid
         # Objects are layed out starting from (-100, -100)
