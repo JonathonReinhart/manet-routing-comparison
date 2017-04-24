@@ -127,7 +127,8 @@ class ManetSimulator(object):
         wifi.SetStandard(ns.wifi.WIFI_PHY_STANDARD_80211b)
         wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager",
                                      "DataMode", phyMode,
-                                     "ControlMode", phyMode)
+                                     "ControlMode", phyMode,
+                                     "NonUnicastMode", phyMode)
 
         wifiPhy = self._setup_wifi_phy()
         wifiMac = self._setup_wifi_mac()
