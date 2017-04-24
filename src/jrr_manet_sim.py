@@ -41,8 +41,8 @@ import readline
 import rlcompleter
 
 WIFI_TX_POWER       = 7.5   # dBm
-NODE_X_INTERVAL     = 5.0   # m
-NODE_Y_INTERVAL     = 20.0  # m
+NODE_X_INTERVAL     = 80.0  # m
+NODE_Y_INTERVAL     = 80.0  # m
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
 UDP_SEND_START_TIME = 15.0  # sec
