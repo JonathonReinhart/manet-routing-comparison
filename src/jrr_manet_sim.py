@@ -7,10 +7,11 @@
 #
 # References:
 # - https://www.nsnam.org/doxygen/manet-routing-compare_8cc.html
-# - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html 
+# - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 # - http://personal.ee.surrey.ac.uk/Personal/K.Katsaros/media/ns3lab-sol/lab-4-solved.cc
 # - https://www.nsnam.org/docs/models/html/flow-monitor.html
+# - https://www.nsnam.org/doxygen/wifi-olsr-flowmon_8py_source.html
 #
 # - AODV:
 #   - https://www.nsnam.org/docs/models/html/aodv.html
@@ -112,11 +113,14 @@ class ManetSimulator(object):
 
         # Set up the sink node
         node = self.destination
-        sockaddr = ns.network.InetSocketAddress(ifaces.GetAddress(node.GetId()), UDP_PORT)
-        self._setup_packet_receive(sockaddr, node)
+        self._server_sockaddr = ns.network.InetSocketAddress(
+                ifaces.GetAddress(node.GetId()), UDP_PORT)
+        self._setup_packet_receive(self._server_sockaddr, node)
 
         # Source node
-        client = ns.applications.UdpClientHelper(sockaddr.GetIpv4(), sockaddr.GetPort())
+        client = ns.applications.UdpClientHelper(
+                self._server_sockaddr.GetIpv4(),
+                self._server_sockaddr.GetPort())
         client.SetAttribute("MaxPackets", UintegerValue(0xFFFFFFFF))
         client.SetAttribute("Interval", TimeValue(Seconds(UDP_PACKET_INTERVAL)))
         client.SetAttribute("PacketSize", UintegerValue(UDP_PACKET_SIZE))
@@ -125,6 +129,7 @@ class ManetSimulator(object):
         app.Stop(Seconds(TOTAL_TIME))
 
 
+        self._setup_flowmon()
 
     def _setup_wifi(self):
         phyMode = StringValue("DsssRate11Mbps")
@@ -224,6 +229,11 @@ class ManetSimulator(object):
             self._packetsTotal  += 1
             self._packetsLast   += 1
 
+    def _setup_flowmon(self):
+        # Set up FlowMonitor
+        self.flowmon_helper = ns.flow_monitor.FlowMonitorHelper()
+        self.flowmon_helper.InstallAll()
+
     def check_throughput(self):
         interval = 1.0  # sec
 
@@ -247,6 +257,65 @@ class ManetSimulator(object):
         self._packetsLast   = 0
 
         ns.core.Simulator.Schedule(Seconds(interval), self.check_throughput)
+
+    def process_flowmon(self, xml_filename):
+        flowmon = self.flowmon_helper.GetMonitor()
+        flowmon.CheckForLostPackets()
+        flowmon.SerializeToXmlFile(xml_filename, True, True)
+
+
+        return next(self._find_flow(dstAddr = self._server_sockaddr.GetIpv4(),
+                                    dstPort = self._server_sockaddr.GetPort()))
+
+
+    def _find_flow(self, srcAddr=None, srcPort=None, dstAddr=None, dstPort=None):
+        flowmon = self.flowmon_helper.GetMonitor()
+        classifier = self.flowmon_helper.GetClassifier()
+
+        for flow_id, flow_stats in flowmon.GetFlowStats():
+            flow = classifier.FindFlow(flow_id)
+
+            def match(key, target):
+                if key is None:
+                    return True
+                return key == target
+
+            if (match(srcAddr, flow.sourceAddress) and
+                match(srcPort, flow.sourcePort) and
+                match(dstAddr, flow.destinationAddress) and
+                match(dstPort, flow.destinationPort)):
+                yield Flow(flow_id, flow, flow_stats)
+
+
+class Flow(object):
+    def __init__(self, flowid, flow, stats):
+        self.id = flowid
+        self.flow = flow
+        self.stats = stats
+
+    def __str__(self):
+        proto = {6: 'TCP', 17: 'UDP'}[self.flow.protocol]
+        return "FlowID: {}  ({} {}/{} --> {}/{})".format(
+            self.id, proto,
+            self.flow.sourceAddress, self.flow.sourcePort,
+            self.flow.destinationAddress, self.flow.destinationPort)
+
+    def print_stats(self):
+        print(self)
+        st = self.stats
+        print("  First Tx Time:     {}".format(st.timeFirstTxPacket))
+        print("  First Rx Time:     {}".format(st.timeFirstRxPacket))
+        print("  Tx Bytes:          {}".format(st.txBytes))
+        print("  Rx Bytes:          {}".format(st.rxBytes))
+        print("  Tx Packets:        {}".format(st.txPackets))
+        print("  Rx Packets:        {}".format(st.rxPackets))
+        print("  Lost Packets:      {}".format(st.lostPackets))
+        if st.rxPackets > 0:
+            print("  Mean Delay:        {}".format(st.delaySum.GetSeconds() / st.rxPackets))
+            print("  Mean Jitter:       {}".format(st.jitterSum.GetSeconds() / (st.rxPackets - 1)))
+            print("  Mean Hop Count:    {}".format(float(st.timesForwarded) / (st.rxPackets + 1)))
+
+
 
 def Distance3D(v1, v2):
     def squared(x):
@@ -335,19 +404,12 @@ def main():
 
     sim.check_throughput()
 
-    # Set up FlowMonitor
-    flowmon_helper = ns.flow_monitor.FlowMonitorHelper()
-    flowmon_helper.InstallAll()
-    flowmon = flowmon_helper.GetMonitor()
-
+    # Run simulation
     ns.core.Simulator.Stop(Seconds(TOTAL_TIME))
     ns.core.Simulator.Run()
 
-
-    flowmon.CheckForLostPackets()
-    flowmon.SerializeToXmlFile("results.xml", True, True)
-
-
+    flow = sim.process_flowmon("flowmon.xml")
+    flow.print_stats()
 
     ns.core.Simulator.Destroy()
 
