@@ -10,6 +10,7 @@
 # - https://www.nsnam.org/doxygen/simple-routing-ping6_8py.html 
 # - https://www.nsnam.org/doxygen/main-grid-topology_8cc_source.html
 # - http://personal.ee.surrey.ac.uk/Personal/K.Katsaros/media/ns3lab-sol/lab-4-solved.cc
+# - https://www.nsnam.org/docs/models/html/flow-monitor.html
 #
 # - AODV:
 #   - https://www.nsnam.org/docs/models/html/aodv.html
@@ -37,6 +38,7 @@ import ns.mobility
 import ns.aodv
 import ns.olsr
 import ns.dsdv
+import ns.flow_monitor
 
 import readline
 import rlcompleter
@@ -314,8 +316,20 @@ def main():
 
     sim.check_throughput()
 
+    # Set up FlowMonitor
+    flowmon_helper = ns.flow_monitor.FlowMonitorHelper()
+    flowmon_helper.InstallAll()
+    flowmon = flowmon_helper.GetMonitor()
+
     ns.core.Simulator.Stop(Seconds(TOTAL_TIME))
     ns.core.Simulator.Run()
+
+
+    flowmon.CheckForLostPackets()
+    flowmon.SerializeToXmlFile("results.xml", True, True)
+
+
+
     ns.core.Simulator.Destroy()
 
 if __name__ == '__main__':
