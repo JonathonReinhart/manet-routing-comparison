@@ -62,8 +62,8 @@ def SelectRandomNode(nodes, k=1):
 
 
 class ManetSimulator(object):
-    def __init__(self, num_nodes, protocol):
-        self._setup(num_nodes, protocol)
+    def __init__(self, num_nodes, node_placement, protocol):
+        self._setup(num_nodes, node_placement, protocol)
 
         self._bytesTotal = 0
         self._bytesLast= 0
@@ -86,7 +86,7 @@ class ManetSimulator(object):
             self._csvfile.close()
 
 
-    def _setup(self, num_nodes, protocol):
+    def _setup(self, num_nodes, node_placement, protocol):
         # Create a container with the desired number of nodes
         self.nodes = ns.network.NodeContainer();
         self.nodes.Create(num_nodes)
@@ -95,7 +95,7 @@ class ManetSimulator(object):
         adhocDevices = self._setup_wifi()
 
         # Set up mobility
-        self._setup_mobility(num_nodes)
+        self._setup_mobility(num_nodes, node_placement)
 
         # Set up routing
         self._setup_routing(protocol)
@@ -168,12 +168,16 @@ class ManetSimulator(object):
         mac.SetType("ns3::AdhocWifiMac")
         return mac
 
-    def _setup_mobility(self, num_nodes):
+    def _setup_mobility(self, num_nodes, node_placement):
         mobility = ns.mobility.MobilityHelper()
 
-        # Try to keep the layout as square as possible
-        straight_line = True
-        grid_width = 1 if straight_line else int(round(math.sqrt(num_nodes)))
+        if node_placement == 'straight-line':
+            grid_width = 1
+        elif node_placement == 'grid':
+            # Try to keep the layout as square as possible
+            grid_width = int(round(math.sqrt(num_nodes)))
+        else:
+            raise ValueError("Invalid node_placement")
 
         # Set up the grid
         # Objects are layed out starting from (-100, -100)
@@ -290,6 +294,8 @@ def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument('-n', '--num-nodes', type=int, default=20,
             help='Number of nodes (default: %(default)d)')
+    ap.add_argument('--placement', default='grid', choices=('grid', 'straight-line'),
+            help='Controls the placement of nodes')
     ap.add_argument('-p', '--protocol', default='OLSR', choices=protocol_map.keys(),
             help='Routing protocol (default: %(default)s)')
     ap.add_argument('-l', '--log', dest='loglevel',
@@ -312,6 +318,7 @@ def main():
 
     sim = ManetSimulator(
             num_nodes = args.num_nodes,
+            node_plaement = args.placement,
             protocol = args.protocol,
             )
 
