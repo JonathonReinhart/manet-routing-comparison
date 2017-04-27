@@ -276,13 +276,14 @@ def ShowAllNodes(nodes):
         print(FormatNode(node))
 
 
-def SetupAodv():
+def SetupAodv(enable_hello):
     aodv = ns.aodv.AodvHelper()
-    aodv.Set("EnableHello", BooleanValue(False))
+    aodv.Set("EnableHello", BooleanValue(enable_hello))
     return aodv
 
 protocol_map = {
-    'AODV':     SetupAodv,
+    'AODV':     lambda: SetupAodv(True),
+    'AODV-NH':  lambda: SetupAodv(False),
     'OLSR':     ns.olsr.OlsrHelper,
     'DSDV':     ns.dsdv.DsdvHelper,
 }
