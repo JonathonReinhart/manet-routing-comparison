@@ -40,8 +40,10 @@ import ns.olsr
 import ns.dsdv
 import ns.flow_monitor
 
-import readline
-import rlcompleter
+# At 7.5 dBm, nodes should be about 80 m apart to ensure that one node's
+# transmissions can only reach his immediate neighbors. This was determined
+# empircally by putting nodes in a straight line, and looking at the packet
+# captures.
 
 WIFI_TX_POWER       = 7.5   # dBm
 NODE_X_INTERVAL     = 80.0  # m
