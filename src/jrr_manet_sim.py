@@ -47,8 +47,6 @@ import ns.visualizer
 # captures.
 
 WIFI_TX_POWER       = 7.5   # dBm
-NODE_X_INTERVAL     = 80.0  # m
-NODE_Y_INTERVAL     = 80.0  # m
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
 UDP_SEND_START_TIME = 15.0  # sec
@@ -62,8 +60,8 @@ def SelectRandomNode(nodes, k=1):
 
 
 class ManetSimulator(object):
-    def __init__(self, num_nodes, node_placement, protocol):
-        self._setup(num_nodes, node_placement, protocol)
+    def __init__(self, num_nodes, node_spacing, node_placement, protocol):
+        self._setup(num_nodes, node_spacing, node_placement, protocol)
 
         self._bytesTotal = 0
         self._bytesLast= 0
@@ -86,7 +84,7 @@ class ManetSimulator(object):
             self._csvfile.close()
 
 
-    def _setup(self, num_nodes, node_placement, protocol):
+    def _setup(self, num_nodes, node_spacing, node_placement, protocol):
         # Create a container with the desired number of nodes
         self.nodes = ns.network.NodeContainer();
         self.nodes.Create(num_nodes)
@@ -95,7 +93,7 @@ class ManetSimulator(object):
         adhocDevices = self._setup_wifi()
 
         # Set up mobility
-        self._setup_mobility(num_nodes, node_placement)
+        self._setup_mobility(num_nodes, node_spacing, node_placement)
 
         # Set up routing
         self._setup_routing(protocol)
@@ -168,7 +166,7 @@ class ManetSimulator(object):
         mac.SetType("ns3::AdhocWifiMac")
         return mac
 
-    def _setup_mobility(self, num_nodes, node_placement):
+    def _setup_mobility(self, num_nodes, node_spacing, node_placement):
         mobility = ns.mobility.MobilityHelper()
 
         if node_placement == 'straight-line':
@@ -185,8 +183,8 @@ class ManetSimulator(object):
                 "ns3::GridPositionAllocator",
                 "MinX", DoubleValue(0),
                 "MinY", DoubleValue(0),
-                "DeltaX", DoubleValue(NODE_X_INTERVAL),
-                "DeltaY", DoubleValue(NODE_Y_INTERVAL),
+                "DeltaX", DoubleValue(node_spacing),
+                "DeltaY", DoubleValue(node_spacing),
                 "GridWidth", UintegerValue(grid_width),
                 "LayoutType", StringValue("RowFirst"),
                 )
@@ -296,6 +294,8 @@ def parse_args():
             help='Number of nodes (default: %(default)d)')
     ap.add_argument('--placement', default='grid', choices=('grid', 'straight-line'),
             help='Controls the placement of nodes')
+    ap.add_argument('--spacing', type=float, default=100.0,
+            help='Controls the spacing of nodes (in meters)')
     ap.add_argument('-p', '--protocol', default='OLSR', choices=protocol_map.keys(),
             help='Routing protocol (default: %(default)s)')
     ap.add_argument('-l', '--log', dest='loglevel',
@@ -318,7 +318,8 @@ def main():
 
     sim = ManetSimulator(
             num_nodes = args.num_nodes,
-            node_plaement = args.placement,
+            node_spacing = args.spacing,
+            node_placement = args.placement,
             protocol = args.protocol,
             )
 
