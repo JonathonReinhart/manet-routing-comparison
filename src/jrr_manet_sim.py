@@ -303,8 +303,8 @@ class Flow(object):
     def print_stats(self):
         print(self)
         st = self.stats
-        print("  First Tx Time:     {}".format(st.timeFirstTxPacket))
-        print("  First Rx Time:     {}".format(st.timeFirstRxPacket))
+        print("  First Tx Time:     {} ms".format(st.timeFirstTxPacket.GetSeconds() * 1000))
+        print("  First Rx Time:     {} ms".format(st.timeFirstRxPacket.GetSeconds() * 1000))
         print("  Tx Bytes:          {}".format(st.txBytes))
         print("  Rx Bytes:          {}".format(st.rxBytes))
         print("  Tx Packets:        {}".format(st.txPackets))
