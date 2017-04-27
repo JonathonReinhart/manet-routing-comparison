@@ -39,6 +39,7 @@ import ns.aodv
 import ns.olsr
 import ns.dsdv
 import ns.flow_monitor
+import ns.visualizer
 
 # At 7.5 dBm, nodes should be about 80 m apart to ensure that one node's
 # transmissions can only reach his immediate neighbors. This was determined
@@ -295,12 +296,19 @@ def parse_args():
             choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
             default='WARNING',
             help='Set the logging level (default: %(default)s)')
+    ap.add_argument('--visual', action='store_true',
+            help='Enable visual simulator')
 
     return ap.parse_args()
 
 def main():
     args = parse_args()
     logging.basicConfig(level=args.loglevel)
+
+    if args.visual:
+        ns.core.GlobalValue.Bind('SimulatorImplementationType',
+                StringValue("ns3::VisualSimulatorImpl"))
+
 
     sim = ManetSimulator(
             num_nodes = args.num_nodes,
