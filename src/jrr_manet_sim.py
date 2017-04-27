@@ -30,7 +30,7 @@ import csv
 
 import ns.applications
 import ns.core
-from ns.core import BooleanValue, DoubleValue, StringValue, UintegerValue, Seconds
+from ns.core import BooleanValue, DoubleValue, StringValue, UintegerValue, Seconds, TimeValue
 import ns.internet
 import ns.network
 import ns.wifi
@@ -49,6 +49,8 @@ NODE_Y_INTERVAL     = 80.0  # m
 UDP_PORT            = 9
 TOTAL_TIME          = 200.0 # sec
 UDP_SEND_START_TIME = 15.0  # sec
+UDP_PACKET_SIZE     = 256   # bytes
+UDP_PACKET_INTERVAL = 0.1   # sec
 
 def SelectRandomNode(nodes, k=1):
     """Select 'k' random nodes from the NodeContainer 'nodes'"""
@@ -102,11 +104,6 @@ class ManetSimulator(object):
             ns.network.Ipv4Mask("255.255.255.0"))
         ifaces = addrs.Assign(adhocDevices)
 
-        onoff = ns.applications.OnOffHelper("ns3::UdpSocketFactory", ns.network.Address())
-        onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"))
-        onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"))
-
-
         # Randomly choose origin node (O) and destination node (D)
         #self.origin, self.destination = SelectRandomNode(self.nodes, 2)
         self.origin = self.nodes.Get(0)
@@ -118,11 +115,14 @@ class ManetSimulator(object):
         self._setup_packet_receive(sockaddr, node)
 
         # Source node
-        node = self.origin
-        onoff.SetAttribute("Remote", ns.network.AddressValue(sockaddr))
-        temp = onoff.Install(node)
-        temp.Start(Seconds(UDP_SEND_START_TIME))
-        temp.Stop(Seconds(TOTAL_TIME))
+        client = ns.applications.UdpClientHelper(sockaddr.GetIpv4(), sockaddr.GetPort())
+        client.SetAttribute("MaxPackets", UintegerValue(0xFFFFFFFF))
+        client.SetAttribute("Interval", TimeValue(Seconds(UDP_PACKET_INTERVAL)))
+        client.SetAttribute("PacketSize", UintegerValue(UDP_PACKET_SIZE))
+        app = client.Install(ns.network.NodeContainer(self.origin))
+        app.Start(Seconds(0))
+        app.Stop(Seconds(TOTAL_TIME))
+
 
 
     def _setup_wifi(self):
