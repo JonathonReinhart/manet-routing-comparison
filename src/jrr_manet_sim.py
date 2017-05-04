@@ -18,10 +18,6 @@
 #   - https://www.nsnam.org/doxygen/classns3_1_1_aodv_helper.html
 #   - https://www.nsnam.org/doxygen/classns3_1_1aodv_1_1_routing_protocol.html
 #
-# TODO:
-# - Determine and record routing establishment time
-# - Determine and record end-to-end delay
-#
 from __future__ import print_function
 import argparse
 import logging
